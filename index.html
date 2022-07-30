@@ -1,0 +1,60 @@
+<style type="text/css">  
+.center {
+display: flex;
+justify-content: center;
+}
+</style>
+
+<html>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <head>
+        <title>Arabic Speech Recognition</title>
+    </head>
+    <body> <div class="center"><button type="button" id="speech_start" onclick="onStart()">Start here!</button>
+    </div><br> 
+    <div class="center"><p id="resulting_text"></p></div>
+    </body>
+</html>
+
+<script type="text/javascript">
+    const SpeechRecognition = window.SpeechRecognition || webkitSpeechRecognition;
+    const SpeechRecognitionEvent = window.SpeechRecognitionEvent || webkitSpeechRecognitionEvent;
+    const recognition = new SpeechRecognition();
+
+    recognition.lang = 'ar';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.continuous = false;
+    let text = '';
+
+    function onStart(){
+    recognition.start();
+    setup();
+    }
+
+    recognition.onresult = function(event) {
+        text = event.results[0][0].transcript;
+        document.getElementById("resulting_text").innerHTML = text;
+    }
+
+    async function setup(){
+        const filters = [
+         { usbVendorId: 0x2341, usbProductId: 0x0043 },
+         { usbVendorId: 0x2341, usbProductId: 0x0001 }
+        ];
+
+        // Prompt user to select an Arduino Uno device.
+        const port = await navigator.serial.requestPort({ filters });
+
+        // Wait for the serial port to open.
+        await port.open({ baudRate: 9600 });
+
+        // Sending data to the serial device.
+        const textEncoder = new TextEncoderStream();
+        const writableStreamClosed = textEncoder.readable.pipeTo(port.writable);
+        const writer = textEncoder.writable.getWriter();
+        await writer.write(text);
+    }
+    
+</script>
+
